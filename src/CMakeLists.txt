@@ -498,7 +498,7 @@ pkg_check_modules(DEPS REQUIRED
     libxml-2.0>=2.7.8
     gcr-3>=3.10.1
     gobject-introspection-1.0
-    webkitgtk-3.0>=2.4.0
+    webkit2gtk-4.0>=2.6
     enchant>=1.6
     ${EXTRA_CLIENT_PKG_CONFIG}
 )
@@ -516,10 +516,9 @@ set(ENGINE_PACKAGES
     glib-2.0 gee-0.8 gio-2.0 gmime-2.6 posix sqlite3 libxml-2.0
 )
 
-# webkitgtk-3.0 is listed as a custom VAPI (below) to ensure it's treated as a dependency and
-# built before compilation
 set(CLIENT_PACKAGES
-    gtk+-3.0 libsecret-1 libsoup-2.4 libnotify libcanberra gcr-3 enchant ${EXTRA_CLIENT_PACKAGES}
+    gtk+-3.0 libsecret-1 webkit2gtk-4.0 libsoup-2.4 libnotify
+    libcanberra gcr-3 enchant ${EXTRA_CLIENT_PACKAGES}
 )
 
 set(CONSOLE_PACKAGES
@@ -568,9 +567,6 @@ else ()
     message(STATUS "POODLE SSLv3 fix: ON")
 endif ()
 
-set(WEBKITGTK_METADATA_DIR webkitgtk-2.4)
-set(WEBKITGTK_CUSTOM_VALA webkitgtk-2.4/WebKit-3.0-custom.vala)
-
 set(LIB_PATHS ${DEPS_LIBRARY_DIRS})
 link_directories(${LIB_PATHS})
 add_definitions(${CFLAGS})
@@ -578,7 +574,6 @@ add_definitions(${CFLAGS})
 set(VALAC_OPTIONS
     --vapidir=${CMAKE_SOURCE_DIR}/bindings/vapi
     --metadatadir=${CMAKE_SOURCE_DIR}/bindings/metadata
-    --metadatadir=${CMAKE_SOURCE_DIR}/bindings/metadata/${WEBKITGTK_METADATA_DIR}
     --target-glib=${TARGET_GLIB}
     --thread
     --enable-checking
@@ -605,17 +600,6 @@ add_library(geary-static STATIC ${ENGINE_VALA_C})
 add_dependencies(geary-static git-version)
 target_link_libraries(geary-static ${DEPS_LIBRARIES} sqlite3-unicodesn gthread-2.0)
 
-# WebKitGTK VAPI generation
-#################################################
-add_custom_command(
-    OUTPUT
-        ${CMAKE_BINARY_DIR}/src/webkitgtk-3.0.vapi
-    WORKING_DIRECTORY
-        ${CMAKE_SOURCE_DIR}/bindings/metadata
-    COMMAND
-        vapigen --pkg=gio-2.0 --pkg=gtk+-3.0 --pkg=libsoup-2.4 --metadatadir=. --metadatadir=${WEBKITGTK_METADATA_DIR} --library=webkitgtk-3.0 --directory=${CMAKE_BINARY_DIR}/src ${WEBKITGTK_CUSTOM_VALA} `${PKG_CONFIG_EXECUTABLE} --variable=girdir gobject-introspection-1.0`/WebKit-3.0.gir
-)
-
 # Geary client app
 #################################################
 set_property(SOURCE ${RESOURCES_C} PROPERTY GENERATED TRUE)
@@ -628,7 +612,6 @@ PACKAGES
     ${ENGINE_PACKAGES}
 CUSTOM_VAPIS
     "${CMAKE_BINARY_DIR}/src/geary-static.vapi"
-    "${CMAKE_BINARY_DIR}/src/webkitgtk-3.0.vapi"
 OPTIONS
     ${VALAC_OPTIONS}
     --vapidir=${CMAKE_BINARY_DIR}/src
