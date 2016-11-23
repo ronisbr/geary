@@ -506,6 +506,7 @@ pkg_check_modules(DEPS REQUIRED
     gobject-introspection-1.0
     webkit2gtk-4.0>=${TARGET_WEBKIT}
     webkit2gtk-web-extension-4.0>=${TARGET_WEBKIT}
+    javascriptcoregtk-4.0>=${TARGET_WEBKIT}
     enchant>=1.6
     ${EXTRA_CLIENT_PKG_CONFIG}
 )
@@ -523,9 +524,10 @@ set(ENGINE_PACKAGES
     glib-2.0 gee-0.8 gio-2.0 gmime-2.6 posix sqlite3 libxml-2.0
 )
 
+# webkit2gtk-4.0 is included as custom VAPI below
 set(CLIENT_PACKAGES
-    gtk+-3.0 libsecret-1 webkit2gtk-4.0 libsoup-2.4 libnotify
-    libcanberra gcr-3 enchant ${EXTRA_CLIENT_PACKAGES}
+  gtk+-3.0 javascriptcore-4.0 libsecret-1 libsoup-2.4 libnotify libcanberra
+  gcr-3 enchant ${EXTRA_CLIENT_PACKAGES}
 )
 
 set(WEB_PROCESS_PACKAGES
@@ -585,7 +587,6 @@ add_definitions(${CFLAGS})
 
 set(VALAC_OPTIONS
     --vapidir=${CMAKE_SOURCE_DIR}/bindings/vapi
-    --vapidir=/home/mjg/Projects/GNOME/vala/vapi
     --metadatadir=${CMAKE_SOURCE_DIR}/bindings/metadata
     --target-glib=${TARGET_GLIB}
     --thread
@@ -619,6 +620,20 @@ set_property(
 add_dependencies(geary-static git-version)
 target_link_libraries(geary-static ${DEPS_LIBRARIES} sqlite3-unicodesn gthread-2.0)
 
+# WebKit2GTK VAPI generation
+#################################################
+add_custom_command(
+    OUTPUT
+        ${CMAKE_BINARY_DIR}/src/webkit2gtk-4.0.vapi
+    DEPENDS
+        ${CMAKE_SOURCE_DIR}/bindings/metadata/WebKit2-4.0.metadata
+        ${CMAKE_SOURCE_DIR}/bindings/vapi/javascriptcore-4.0.vapi
+    WORKING_DIRECTORY
+        ${CMAKE_SOURCE_DIR}/bindings/metadata
+    COMMAND
+        vapigen --library=webkit2gtk-4.0 --pkg gtk+-3.0 --pkg libsoup-2.4 --pkg javascriptcore-4.0 --vapidir=${CMAKE_SOURCE_DIR}/bindings/vapi --metadatadir=${CMAKE_SOURCE_DIR}/bindings/metadata --directory=${CMAKE_BINARY_DIR}/src `${PKG_CONFIG_EXECUTABLE} --variable=girdir gobject-introspection-1.0`/WebKit2-4.0.gir
+)
+
 # Geary client app
 #################################################
 set_property(SOURCE ${RESOURCES_C} PROPERTY GENERATED TRUE)
@@ -631,9 +646,9 @@ PACKAGES
     ${ENGINE_PACKAGES}
 CUSTOM_VAPIS
     "${CMAKE_BINARY_DIR}/src/geary-static.vapi"
+    "${CMAKE_BINARY_DIR}/src/webkit2gtk-4.0.vapi"
 OPTIONS
     ${VALAC_OPTIONS}
-    --vapidir=${CMAKE_BINARY_DIR}/src
     --gresources=${RESOURCES_XML}
 )
 
