@@ -24,6 +24,7 @@ public class Geary.RFC822.Message : BaseObject {
     private const string HEADER_MAILER = "X-Mailer";
     private const string HEADER_BCC = "Bcc";
     private const string HEADER_MESSAGE_ID = "Message-ID";
+    private const string HEADER_DISPOSITION_NOTIFICATION_TO = "Disposition-Notification-To";
     
     // Internal note: If a field is added here, it *must* be set in stock_from_gmime().
     public RFC822.MailboxAddress? sender { get; private set; default = null; }
@@ -35,6 +36,7 @@ public class Geary.RFC822.Message : BaseObject {
     public RFC822.MessageIDList? in_reply_to { get; private set; default = null; }
     public RFC822.MessageIDList? references { get; private set; default = null; }
     public RFC822.MessageID? message_id { get; private set; default = null; }
+    public RFC822.MailboxAddress? disposition_notification_to { get; private set; default = null; }
     public RFC822.Subject? subject { get; private set; default = null; }
     public string? mailer { get; private set; default = null; }
     public Geary.RFC822.Date? date { get; private set; default = null; }
@@ -473,6 +475,16 @@ public class Geary.RFC822.Message : BaseObject {
                 date = new Geary.RFC822.Date(message.get_date_as_string());
             } catch (Error error) {
                 debug("Could not get date from message: %s", error.message);
+            }
+        }
+
+        // Get the field `Disposition-Notification-To`.
+        if (!String.is_empty(message.get_header(HEADER_DISPOSITION_NOTIFICATION_TO))) {
+            string disposition_notification_to = GMime.utils_header_decode_text(message.get_header(HEADER_DISPOSITION_NOTIFICATION_TO));
+            try {
+                this.disposition_notification_to = new RFC822.MailboxAddress.from_rfc822_string(disposition_notification_to);
+            } catch (RFC822Error e) {
+                debug("Invalid RFC822 address in field Disposition-Notification-To: %s", disposition_notification_to);
             }
         }
     }
