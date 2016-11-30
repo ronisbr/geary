@@ -233,6 +233,9 @@ public class ConversationMessage : Gtk.Grid {
     [GtkChild]
     private Gtk.InfoBar remote_images_infobar;
 
+    [GtkChild]
+    private Gtk.InfoBar disposition_notification_infobar;
+
     // The web_view's context menu
     private Gtk.Menu? context_menu = null;
 
@@ -286,6 +289,8 @@ public class ConversationMessage : Gtk.Grid {
     /** Fired when the user activates a specific search shortcut. */
     public signal void search_activated(string operator, string value);
 
+    /** Fired when the user wants to send a disposition notification. */
+    public signal void send_disposition_notification(Geary.RFC822.Message message);
 
     /**
      * Constructs a new view to display an RFC 823 message headers and body.
@@ -460,6 +465,12 @@ public class ConversationMessage : Gtk.Grid {
      * Starts loading the message body in the HTML view.
      */
     public async void load_message_body(Cancellable load_cancelled) {
+        // Show an infobar if the sender wants to be notified when the user
+        // reads the message.
+        if (this.message.disposition_notification_to != null) {
+            disposition_notification_infobar.show();
+        }
+
         string? body_text = null;
         try {
             body_text = (this.message.has_html_body())
@@ -1470,6 +1481,21 @@ public class ConversationMessage : Gtk.Grid {
         }
 
         remote_images_infobar.hide();
+    }
+
+    [GtkCallback]
+    private void on_disposition_notification_response(Gtk.InfoBar info_Bar, int response_id) {
+        switch (response_id) {
+            case 1:
+                // Send disposition notification.
+                send_disposition_notification(this.message);
+                break;
+            default:
+                // Pass
+                break;
+        }
+
+        disposition_notification_infobar.hide();
     }
 
     private void on_copy_link(Variant? param) {

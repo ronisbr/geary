@@ -2769,6 +2769,9 @@ public class GearyController : Geary.BaseObject {
             });
         view.save_attachments.connect(on_save_attachments);
         view.view_source.connect(on_view_source);
+        view.send_disposition_notification.connect((message) => {
+                on_send_disposition_notification.begin(message);
+            });
     }
 
     private void on_view_source(ConversationEmail email_view) {
@@ -2977,5 +2980,11 @@ public class GearyController : Geary.BaseObject {
         }
     }
 
+    /**
+      * Send the Disposition Notification message to the sender.
+      */
+    private async void on_send_disposition_notification(Geary.RFC822.Message message) {
+        // XXX Prepare the MDN and send it.
+    }
 }
 

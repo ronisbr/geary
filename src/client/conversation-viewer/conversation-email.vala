@@ -355,6 +355,8 @@ public class ConversationEmail : Gtk.Box {
     /** Fired when the user selects text in a message. */
     internal signal void body_selection_changed(bool has_selection);
 
+    /** Fired when the user asks to send disposition notification. */
+    public signal void send_disposition_notification(Geary.RFC822.Message message);
 
     /**
      * Constructs a new view to display an email.
@@ -602,6 +604,9 @@ public class ConversationEmail : Gtk.Box {
         view.web_view.selection_changed.connect(() => {
                 on_message_selection_changed(view);
             });
+        view.send_disposition_notification.connect((message) => {
+                this.on_send_disposition_notification(message);
+            });
     }
 
     private void update_email_state() {
@@ -759,4 +764,7 @@ public class ConversationEmail : Gtk.Box {
                            len < this.displayed_attachments.size);
     }
 
+    private void on_send_disposition_notification(Geary.RFC822.Message message) {
+        send_disposition_notification(message);
+    }
 }
