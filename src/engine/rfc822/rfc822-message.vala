@@ -23,6 +23,7 @@ public class Geary.RFC822.Message : BaseObject {
     private const string HEADER_REFERENCES = "References";
     private const string HEADER_MAILER = "X-Mailer";
     private const string HEADER_BCC = "Bcc";
+    private const string HEADER_MESSAGE_ID = "Message-ID";
     
     // Internal note: If a field is added here, it *must* be set in stock_from_gmime().
     public RFC822.MailboxAddress? sender { get; private set; default = null; }
@@ -33,6 +34,7 @@ public class Geary.RFC822.Message : BaseObject {
     public RFC822.MailboxAddresses? reply_to { get; private set; default = null; }
     public RFC822.MessageIDList? in_reply_to { get; private set; default = null; }
     public RFC822.MessageIDList? references { get; private set; default = null; }
+    public RFC822.MessageID? message_id { get; private set; default = null; }
     public RFC822.Subject? subject { get; private set; default = null; }
     public string? mailer { get; private set; default = null; }
     public Geary.RFC822.Date? date { get; private set; default = null; }
@@ -100,7 +102,10 @@ public class Geary.RFC822.Message : BaseObject {
         message.set_sender(this.from.to_rfc822_string());
         message.set_date_as_string(this.date.serialize());
         if (message_id != null)
+        {
             message.set_message_id(message_id);
+            this.message_id = new Geary.RFC822.MessageID(message_id);
+        }
 
         // Optional headers
         if (email.to != null) {
@@ -459,6 +464,9 @@ public class Geary.RFC822.Message : BaseObject {
         
         if (!String.is_empty(message.get_header(HEADER_MAILER)))
             mailer = message.get_header(HEADER_MAILER);
+
+        if (!String.is_empty(message.get_header(HEADER_MESSAGE_ID)))
+            message_id = new RFC822.MessageID(message.get_header(HEADER_MESSAGE_ID));
         
         if (!String.is_empty(message.get_date_as_string())) {
             try {
