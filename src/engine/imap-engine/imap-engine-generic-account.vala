@@ -883,17 +883,24 @@ private abstract class Geary.ImapEngine.GenericAccount : Geary.Account {
             warning("Unable to ensure special folders: %s", e.message);
         }
     }
-    
+
     public override async void send_email_async(Geary.ComposedEmail composed,
         Cancellable? cancellable = null) throws Error {
         check_open();
-        
+
         // TODO: we should probably not use someone else's FQDN in something
         // that's supposed to be globally unique...
         Geary.RFC822.Message rfc822 = new Geary.RFC822.Message.from_composed_email(
             composed, GMime.utils_generate_message_id(information.get_smtp_endpoint().remote_address.hostname));
-        
-        // don't use create_email_async() as that requires the folder be open to use
+
+        yield send_rfc822_async(rfc822, cancellable);
+    }
+
+    public override async void send_rfc822_async(Geary.RFC822.Message rfc822,
+        Cancellable? cancellable = null) throws Error {
+
+        // Don't use create_email_async() as that requires the folder be open to
+        // use.
         yield local.outbox.enqueue_email_async(rfc822, cancellable);
     }
 

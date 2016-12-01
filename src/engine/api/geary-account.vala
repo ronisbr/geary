@@ -315,6 +315,13 @@ public abstract class Geary.Account : BaseObject {
      */
     public abstract async void send_email_async(Geary.ComposedEmail composed, Cancellable? cancellable = null)
         throws Error;
+
+    /**
+     * Submits a generic RFC822 message for delivery. This is currently used to
+     * send the disposition notification e-mail.
+     */
+    public abstract async void send_rfc822_async(Geary.RFC822.Message rfc822, Cancellable? cancellable = null)
+        throws Error;
     
     /**
      * Search the local account for emails referencing a Message-ID value
