@@ -278,6 +278,129 @@ public class Geary.RFC822.Message : BaseObject {
         this.message.set_mime_part(main_part);
     }
 
+    /**
+     * Create a RFC822 message with the MDN (Message Disposition Notification)
+     * according to RFC 3798.
+     */
+    public Message.create_mdn(DateTime date,
+                              RFC822.MailboxAddresses from,
+                              RFC822.MailboxAddresses to,
+                              string mdn_subject,
+                              string mdn_body_text,
+                              string mailer,
+                              string mdn_message_id,
+                              string? message_id = null)
+    {
+        this.message = new GMime.Message(true);
+
+        // Required headers
+        this.from = from;
+        this.date = new RFC822.Date.from_date_time(date);
+
+        // GMimeMessage.set_sender actually sets the From header - and
+        // although the API docs make it sound otherwise, it also
+        // supports a list of addresses
+        message.set_sender(this.from.to_rfc822_string());
+        message.set_date_as_string(this.date.serialize());
+
+        if (message_id != null)
+        {
+            message.set_message_id(message_id);
+            this.message_id = new Geary.RFC822.MessageID(message_id);
+        }
+
+        this.to = to;
+        foreach (RFC822.MailboxAddress mailbox in to)
+            this.message.add_recipient(GMime.RecipientType.TO, mailbox.name, mailbox.address);
+
+        this.subject = new Geary.RFC822.Subject(mdn_subject);
+        this.message.set_subject(mdn_subject);
+
+        // User-Agent
+        this.mailer = mailer;
+        this.message.set_header(HEADER_MAILER, mailer);
+
+        // Build the message's body mime parts
+        Gee.List<GMime.Object> body_parts = new Gee.LinkedList<GMime.Object>();
+
+        // Share the body charset and encoding between plain and HTML
+        // parts, so we don't need to work it out twice.
+        string? body_charset = null;
+        GMime.ContentEncoding? body_encoding = null;
+
+        // Body: The MDN uses always a text body.
+        GMime.Part? body_text = body_data_to_part(mdn_body_text.data,
+                                                  ref body_charset,
+                                                  ref body_encoding,
+                                                  "text/plain",
+                                                  true);
+        body_parts.add(body_text);
+
+        // Build the message's main part.
+        Gee.List<GMime.Object> main_parts = new Gee.LinkedList<GMime.Object>();
+        GMime.Object? body_part = coalesce_parts(body_parts, "alternative");
+        if (body_part != null)
+            main_parts.add(body_part);
+
+        try {
+            // Prepare the report file to be sent according to RFC 3798.
+            string mdn_text = Geary.ImapUtf7.utf8_to_imap_utf7(
+                "Reporting-UA: " + mailer + "\r\n" +
+                "Final-Recipient: rfc822; " + this.from.get(0).get_short_address() + "\r\n" +
+                "Original-Message-ID: " + mdn_message_id + "\r\n" +
+                "Disposition: manual-action/MDN-sent-manually; displayed\r\n" +
+                ""
+                );
+
+            // Create the stream for the MDN text.
+            GMime.Stream mdn_stream = new
+                GMime.StreamMem.with_buffer(mdn_text.data);
+
+            GMime.StreamFilter filter_stream =
+                new GMime.StreamFilter(mdn_stream);
+            filter_stream.add(
+                new GMime.FilterCharset(DEFAULT_CHARSET, "7bit"));
+            filter_stream.add(
+                new GMime.FilterCRLF(true, false));
+
+            // Create the part to be added to the message.
+            GMime.Part mdn_part = new GMime.Part();
+            GMime.DataWrapper mdn_data = new GMime.DataWrapper.with_stream(
+                    filter_stream, GMime.ContentEncoding.DEFAULT
+                    );
+
+            // Content-Type: message/disposition-notification
+            // Content-Transfer-Encoding: 7bit
+            mdn_part.set_content_type(
+                new GMime.ContentType.from_string("message/disposition-notification")
+                );
+            mdn_part.set_content_object(mdn_data);
+            mdn_part.set_content_encoding(GMime.ContentEncoding.7BIT);
+
+            // Add MDN to the message.
+            Gee.List<GMime.Object> attachment_parts =
+                new Gee.LinkedList<GMime.Object>();
+
+            attachment_parts.add(mdn_part);
+
+            GMime.Object? attachment_part =
+                coalesce_parts(attachment_parts, "mixed");
+
+            if (attachment_part != null)
+                main_parts.add(attachment_part);
+
+            // Main message part.
+            GMime.Object? main_part = coalesce_parts(
+                main_parts,
+                "report; report-type=disposition-notification;"
+                );
+
+            this.message.set_mime_part(main_part);
+        } catch (Error e) {
+            debug("Could not create MDN RFC822: %s", e.message);
+        }
+    }
+
     // Makes a copy of the given message without the BCC fields. This is used for sending the email
     // without sending the BCC headers to all recipients.
     public Message.without_bcc(Message email) {
