@@ -37,6 +37,7 @@ public class Geary.ComposedEmail : BaseObject {
     public string? body_text { get; set; default = null; }
     public string? body_html { get; set; default = null; }
     public string? mailer { get; set; default = null; }
+    public RFC822.MailboxAddresses? disposition_notification_to { get; set; default = null; }
 
     public Gee.Set<File> attached_files { get; private set;
         default = new Gee.HashSet<File>(Geary.Files.nullable_hash, Geary.Files.nullable_equal); }

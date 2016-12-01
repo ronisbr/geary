@@ -36,7 +36,7 @@ public class Geary.RFC822.Message : BaseObject {
     public RFC822.MessageIDList? in_reply_to { get; private set; default = null; }
     public RFC822.MessageIDList? references { get; private set; default = null; }
     public RFC822.MessageID? message_id { get; private set; default = null; }
-    public RFC822.MailboxAddress? disposition_notification_to { get; private set; default = null; }
+    public RFC822.MailboxAddresses? disposition_notification_to { get; private set; default = null; }
     public RFC822.Subject? subject { get; private set; default = null; }
     public string? mailer { get; private set; default = null; }
     public Geary.RFC822.Date? date { get; private set; default = null; }
@@ -146,6 +146,13 @@ public class Geary.RFC822.Message : BaseObject {
         if (email.references != null) {
             this.references = new Geary.RFC822.MessageIDList.from_rfc822_string(email.references);
             this.message.set_header(HEADER_REFERENCES, email.references);
+        }
+
+        if (email.disposition_notification_to != null) {
+            this.disposition_notification_to = email.disposition_notification_to;
+            this.message.set_header(
+                HEADER_DISPOSITION_NOTIFICATION_TO,
+                email.disposition_notification_to.to_rfc822_string());
         }
 
         if (email.subject != null) {
@@ -603,12 +610,12 @@ public class Geary.RFC822.Message : BaseObject {
 
         // Get the field `Disposition-Notification-To`.
         if (!String.is_empty(message.get_header(HEADER_DISPOSITION_NOTIFICATION_TO))) {
-            string disposition_notification_to = GMime.utils_header_decode_text(message.get_header(HEADER_DISPOSITION_NOTIFICATION_TO));
-            try {
-                this.disposition_notification_to = new RFC822.MailboxAddress.from_rfc822_string(disposition_notification_to);
-            } catch (RFC822Error e) {
-                debug("Invalid RFC822 address in field Disposition-Notification-To: %s", disposition_notification_to);
-            }
+            string disposition_notification_to = GMime.utils_header_decode_text(
+                message.get_header(HEADER_DISPOSITION_NOTIFICATION_TO));
+
+            this.disposition_notification_to =
+                new RFC822.MailboxAddresses.from_rfc822_string(
+                    disposition_notification_to);
         }
     }
     

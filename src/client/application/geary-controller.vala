@@ -3002,7 +3002,7 @@ public class GearyController : Geary.BaseObject {
             new Geary.RFC822.Message.create_mdn(
                 new DateTime.now_local(),
                 new Geary.RFC822.MailboxAddresses.single(current_account.information.primary_mailbox),
-                new Geary.RFC822.MailboxAddresses.single(message.disposition_notification_to),
+                message.disposition_notification_to,
                 mdn_subject, mdn_body.str,
                 GearyApplication.PRGNAME + "/" + GearyApplication.VERSION,
                 message.message_id.to_string(),

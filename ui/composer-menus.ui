@@ -54,6 +54,12 @@
         <attribute name="action">cmp.show-extended</attribute>
       </item>
     </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Request Read Receipt</attribute>
+        <attribute name="action">cmp.request-read-receipt</attribute>
+      </item>
+    </section>
   </menu>
 
   <menu id="plain_menu_model">
@@ -67,6 +73,12 @@
       <item>
         <attribute name="label" translatable="yes">Show Extended Fields</attribute>
         <attribute name="action">cmp.show-extended</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Request Read Receipt</attribute>
+        <attribute name="action">cmp.request-read-receipt</attribute>
       </item>
     </section>
   </menu>
