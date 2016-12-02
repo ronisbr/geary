@@ -353,7 +353,7 @@ public class Geary.RFC822.Message : BaseObject {
             // Prepare the report file to be sent according to RFC 3798.
             string mdn_text = Geary.ImapUtf7.utf8_to_imap_utf7(
                 "Reporting-UA: " + mailer + "\r\n" +
-                "Final-Recipient: rfc822; " + this.from.get(0).get_short_address() + "\r\n" +
+                "Final-Recipient: rfc822; " + this.from.get(0).address + "\r\n" +
                 "Original-Message-ID: " + mdn_message_id + "\r\n" +
                 "Disposition: manual-action/MDN-sent-manually; displayed\r\n" +
                 ""
