@@ -78,7 +78,17 @@ public class Geary.Imap.MessageFlag : Geary.Imap.Flag {
         
         return _load_remote_images;
     } }
-    
+
+    // Message Disposition Notification flag according to RFC 3503.
+    private static MessageFlag? _disposition_notification_sent = null;
+    public static MessageFlag MDN_SENT { get {
+        if (_disposition_notification_sent == null)
+            _disposition_notification_sent =
+                new MessageFlag("$MDNSent");
+
+        return _disposition_notification_sent;
+    } }
+
     /**
      * Creates an IMAP message (email) named flag.
      */
@@ -96,6 +106,7 @@ public class Geary.Imap.MessageFlag : Geary.Imap.Flag {
         to_init = SEEN;
         to_init = ALLOWS_NEW;
         to_init = LOAD_REMOTE_IMAGES;
+        to_init = MDN_SENT;
     }
     
     // Converts a list of email flags to add and remove to a list of message
@@ -115,6 +126,8 @@ public class Geary.Imap.MessageFlag : Geary.Imap.Flag {
                 msg_flags_add.add(MessageFlag.LOAD_REMOTE_IMAGES);
             if (email_flags_add.contains(Geary.EmailFlags.DRAFT))
                 msg_flags_add.add(MessageFlag.DRAFT);
+            if (email_flags_add.contains(Geary.EmailFlags.MDN_SENT))
+                msg_flags_add.add(MessageFlag.MDN_SENT);
         }
 
         if (email_flags_remove != null) {
@@ -126,6 +139,8 @@ public class Geary.Imap.MessageFlag : Geary.Imap.Flag {
                 msg_flags_remove.add(MessageFlag.LOAD_REMOTE_IMAGES);
             if (email_flags_remove.contains(Geary.EmailFlags.DRAFT))
                 msg_flags_remove.add(MessageFlag.DRAFT);
+            if (email_flags_remove.contains(Geary.EmailFlags.MDN_SENT))
+                msg_flags_remove.add(MessageFlag.MDN_SENT);
         }
     }
     

@@ -263,6 +263,9 @@ public class ConversationMessage : Gtk.Grid {
     // Should any remote messages be always loaded and displayed?
     private bool always_load_remote_images;
 
+    // Was the disposition notification already sent?
+    private bool disposition_notification_sent;
+
     private int next_replaced_buffer_number = 0;
     private Gee.HashMap<string, ReplacedImage> replaced_images = new Gee.HashMap<string, ReplacedImage>();
     private Gee.HashSet<string> replaced_content_ids = new Gee.HashSet<string>();
@@ -301,10 +304,12 @@ public class ConversationMessage : Gtk.Grid {
      */
     public ConversationMessage(Geary.RFC822.Message message,
                                Geary.ContactStore contact_store,
-                               bool always_load_remote_images) {
+                               bool always_load_remote_images,
+                               bool disposition_notification_sent) {
         this.message = message;
         this.contact_store = contact_store;
         this.always_load_remote_images = always_load_remote_images;
+        this.disposition_notification_sent = disposition_notification_sent;
 
         // Actions
 
@@ -467,7 +472,8 @@ public class ConversationMessage : Gtk.Grid {
     public async void load_message_body(Cancellable load_cancelled) {
         // Show an infobar if the sender wants to be notified when the user
         // reads the message.
-        if (this.message.disposition_notification_to != null) {
+        if (this.message.disposition_notification_to != null &&
+            this.disposition_notification_sent       == false ) {
             disposition_notification_infobar.show();
         }
 

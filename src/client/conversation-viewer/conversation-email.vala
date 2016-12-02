@@ -433,7 +433,8 @@ public class ConversationEmail : Gtk.Box {
         this.primary_message = new ConversationMessage(
             message,
             contact_store,
-            email.load_remote_images().is_certain()
+            email.load_remote_images().is_certain(),
+            email.email_flags.is_disposition_notification_sent()
         );
         connect_message_view_signals(this.primary_message);
 
@@ -475,7 +476,7 @@ public class ConversationEmail : Gtk.Box {
         }
         foreach (Geary.RFC822.Message sub_message in sub_messages) {
             ConversationMessage attached_message =
-                new ConversationMessage(sub_message, contact_store, false);
+                new ConversationMessage(sub_message, contact_store, false, false);
             connect_message_view_signals(attached_message);
             this.sub_messages.add(attached_message);
             this._attached_messages.add(attached_message);
@@ -765,6 +766,10 @@ public class ConversationEmail : Gtk.Box {
     }
 
     private void on_send_disposition_notification(Geary.RFC822.Message message) {
+        // XXX We should wait for the email-sent signal to add the flag
+        // MDN_SENT.
+        mark_email(Geary.EmailFlags.MDN_SENT, null);
+
         send_disposition_notification(message);
     }
 }

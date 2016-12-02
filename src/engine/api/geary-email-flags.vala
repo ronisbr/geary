@@ -26,6 +26,11 @@ public class Geary.EmailFlags : Geary.NamedFlags {
     public static NamedFlag LOAD_REMOTE_IMAGES { owned get {
         return new NamedFlag("LOADREMOTEIMAGES");
     } }
+
+    // Message Disposition Notification flag according to RFC 3503.
+    public static NamedFlag MDN_SENT { owned get {
+        return new NamedFlag("$MDNSent");
+    } }
     
     public static NamedFlag DRAFT { owned get {
         return new NamedFlag("DRAFT");
@@ -64,6 +69,10 @@ public class Geary.EmailFlags : Geary.NamedFlags {
     
     public inline bool load_remote_images() {
         return contains(LOAD_REMOTE_IMAGES);
+    }
+
+    public inline bool is_disposition_notification_sent() {
+        return contains(MDN_SENT);
     }
     
     public inline bool is_draft() {
