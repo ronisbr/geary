@@ -293,7 +293,7 @@ public class ConversationMessage : Gtk.Grid {
     public signal void search_activated(string operator, string value);
 
     /** Fired when the user wants to send a disposition notification. */
-    public signal void send_disposition_notification(Geary.RFC822.Message message);
+    public signal void send_disposition_notification(Geary.RFC822.Message rfc822);
 
     /**
      * Constructs a new view to display an RFC 823 message headers and body.

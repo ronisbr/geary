@@ -2983,29 +2983,29 @@ public class GearyController : Geary.BaseObject {
     /**
       * Send the Disposition Notification message to the sender.
       */
-    private async void on_send_disposition_notification(Geary.RFC822.Message message) {
+    private async void on_send_disposition_notification(Geary.RFC822.Message rfc822) {
         // Disposition Notification message subject.
         string mdn_subject = "Disposition notification to \"" +
-            message.subject.to_string() + "\"";
+            rfc822.subject.to_string() + "\"";
 
         // Disposition Notification message body.
         StringBuilder mdn_body = new StringBuilder();
         mdn_body.printf(
             "The message sent on %s to %s with subject \"%s\" has been displayed. " +
             "This is of no guarantee that the message has been read or understood.",
-            message.date.to_string(),
+            rfc822.date.to_string(),
             current_account.information.primary_mailbox.get_full_address(),
-            message.subject.to_string()
+            rfc822.subject.to_string()
             );
 
         Geary.RFC822.Message mdn_rfc822 =
             new Geary.RFC822.Message.create_mdn(
                 new DateTime.now_local(),
                 new Geary.RFC822.MailboxAddresses.single(current_account.information.primary_mailbox),
-                message.disposition_notification_to,
+                rfc822.disposition_notification_to,
                 mdn_subject, mdn_body.str,
                 GearyApplication.PRGNAME + "/" + GearyApplication.VERSION,
-                message.message_id.to_string(),
+                rfc822.message_id.to_string(),
                 GMime.utils_generate_message_id(
                     current_account.information.get_smtp_endpoint().remote_address.hostname)
             );

@@ -296,8 +296,7 @@ public class Geary.RFC822.Message : BaseObject {
                               string mdn_body_text,
                               string mailer,
                               string mdn_message_id,
-                              string? message_id = null)
-    {
+                              string? message_id = null) {
         this.message = new GMime.Message(true);
 
         // Required headers

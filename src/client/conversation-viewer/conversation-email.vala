@@ -356,7 +356,7 @@ public class ConversationEmail : Gtk.Box {
     internal signal void body_selection_changed(bool has_selection);
 
     /** Fired when the user asks to send disposition notification. */
-    public signal void send_disposition_notification(Geary.RFC822.Message message);
+    public signal void send_disposition_notification(Geary.RFC822.Message rfc822);
 
     /**
      * Constructs a new view to display an email.
@@ -605,8 +605,8 @@ public class ConversationEmail : Gtk.Box {
         view.web_view.selection_changed.connect(() => {
                 on_message_selection_changed(view);
             });
-        view.send_disposition_notification.connect((message) => {
-                this.on_send_disposition_notification(message);
+        view.send_disposition_notification.connect((rfc822) => {
+                this.on_send_disposition_notification(rfc822);
             });
     }
 
@@ -765,11 +765,11 @@ public class ConversationEmail : Gtk.Box {
                            len < this.displayed_attachments.size);
     }
 
-    private void on_send_disposition_notification(Geary.RFC822.Message message) {
+    private void on_send_disposition_notification(Geary.RFC822.Message rfc822) {
         // XXX We should wait for the email-sent signal to add the flag
         // MDN_SENT.
         mark_email(Geary.EmailFlags.MDN_SENT, null);
 
-        send_disposition_notification(message);
+        send_disposition_notification(rfc822);
     }
 }
