@@ -773,60 +773,96 @@ public class Geary.RFC822.Message : BaseObject {
      *
      * @returns Whether a text part with the desired text_subtype was found
      */
-    private bool construct_body_from_mime_parts(GMime.Object node, Mime.MultipartSubtype container_subtype,
-        string text_subtype, bool to_html, InlinePartReplacer? replacer, ref string? body) throws RFC822Error {
+    private bool construct_body_from_mime_parts(
+        GMime.Object node,
+        Mime.MultipartSubtype container_subtype,
+        string text_subtype,
+        bool to_html,
+        InlinePartReplacer? replacer,
+        ref string? body) throws RFC822Error {
+
         Mime.ContentType? this_content_type = null;
+
         if (node.get_content_type() != null)
-            this_content_type = new Mime.ContentType.from_gmime(node.get_content_type());
-        
-        // If this is a multipart, call ourselves recursively on the children
+            this_content_type =
+                new Mime.ContentType.from_gmime(node.get_content_type());
+
+        // If this is a multipart, call ourselves recursively on the children.
         GMime.Multipart? multipart = node as GMime.Multipart;
+
         if (multipart != null) {
-            Mime.MultipartSubtype this_subtype = Mime.MultipartSubtype.from_content_type(this_content_type,
-                null);
-            
+            Mime.MultipartSubtype this_subtype =
+                Mime.MultipartSubtype.from_content_type(
+                    this_content_type,
+                    null);
+
             bool found_text_subtype = false;
-            
+
             StringBuilder builder = new StringBuilder();
             int count = multipart.get_count();
+            bool add_separator = false;
+
             for (int i = 0; i < count; ++i) {
                 GMime.Object child = multipart.get_part(i);
-                
+
                 string? child_body = null;
-                found_text_subtype |= construct_body_from_mime_parts(child, this_subtype, text_subtype,
-                    to_html, replacer, ref child_body);
-                if (child_body != null)
+                bool is_text = construct_body_from_mime_parts(
+                    child, this_subtype, text_subtype, to_html, replacer,
+                    ref child_body);
+
+                found_text_subtype |= is_text;
+
+                if (child_body != null) {
+                    // If there are more than one text subtype, separate them
+                    // using a horizontal bar.
+                    if (add_separator && is_text) {
+                        if (text_subtype == "html")
+                            builder.append("<hr>");
+                        else
+                            builder.append("------------------------------");
+                    }
+
+                    if (is_text)
+                        add_separator = true;
+
                     builder.append(child_body);
+                }
+
             }
-            
+
             if (!String.is_empty(builder.str))
                 body = builder.str;
-            
+
             return found_text_subtype;
         }
-        
-        // Only process inline leaf parts
+
+        // Only process inline leaf parts.
         GMime.Part? part = node as GMime.Part;
         if (part == null)
             return false;
-        
+
         Mime.ContentDisposition? disposition = null;
         if (part.get_content_disposition() != null)
-            disposition = new Mime.ContentDisposition.from_gmime(part.get_content_disposition());
-        
-        // Stop processing if the part is an attachment
-        if (disposition != null && disposition.disposition_type == Mime.DispositionType.ATTACHMENT)
+            disposition = new Mime.ContentDisposition.from_gmime(
+                part.get_content_disposition());
+
+        // Stop processing if the part is an attachment.
+        if (disposition != null &&
+            disposition.disposition_type == Mime.DispositionType.ATTACHMENT)
             return false;
-        
-        // Assemble body from text parts that are not attachments
-        if (this_content_type != null && this_content_type.has_media_type("text")) {
+
+        // Assemble body from text parts that are not attachments.
+        if (this_content_type != null &&
+            this_content_type.has_media_type("text")) {
+
             if (this_content_type.has_media_subtype(text_subtype)) {
-                body = mime_part_to_memory_buffer(part, true, to_html).to_string();
-                
+                body =
+                    mime_part_to_memory_buffer(part, true, to_html).to_string();
+
                 return true;
             }
-            
-            // We were the wrong kind of text part
+
+            // We were the wrong kind of text part.
             return false;
         }
 
@@ -834,10 +870,12 @@ public class Geary.RFC822.Message : BaseObject {
         // a mixed multipart where each element is to be presented to
         // the user as structure dictates; For alternative and
         // related, the inline part is referred to elsewhere in the
-        // document and it's the callers responsibility to locate them
-        if (replacer != null && disposition != null &&
+        // document and it's the callers responsibility to locate them.
+        if (replacer != null &&
+            disposition != null &&
             disposition.disposition_type == Mime.DispositionType.INLINE &&
             container_subtype == Mime.MultipartSubtype.MIXED) {
+
             body = replacer(RFC822.Utils.get_clean_attachment_filename(part),
                             this_content_type,
                             disposition,
