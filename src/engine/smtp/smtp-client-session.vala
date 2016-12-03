@@ -137,64 +137,78 @@ public class Geary.Smtp.ClientSession {
         throws Error {
         if (!cx.is_connected())
             throw new SmtpError.NOT_CONNECTED("Not connected to %s", to_string());
-        
+
         // RSET if required
         if (rset_required) {
-            Response rset_response = yield cx.transaction_async(new Request(Command.RSET), cancellable);
+            Response rset_response = yield cx.transaction_async(
+                new Request(Command.RSET), cancellable);
+
             if (!rset_response.code.is_success_completed())
                 rset_response.throw_error("Unable to RSET");
-            
+
             rset_required = false;
         }
 
         // MAIL
         MailRequest mail_request = new MailRequest(from);
-        Response response = yield cx.transaction_async(mail_request, cancellable);
+        Response response = yield cx.transaction_async(mail_request,
+                                                       cancellable);
         if (!response.code.is_success_completed())
-            response.throw_error("\"%s\" failed".printf(mail_request.to_string()));
-        
-        // at this point in the session state machine, a RSET is required to start a new
-        // transmission if this fails at any point
+            response.throw_error(
+                "\"%s\" failed".printf(mail_request.to_string()));
+
+        // At this point in the session state machine, a RSET is required to
+        // start a new transmission if this fails at any point.
         rset_required = true;
-        
+
         // RCPTs
         Gee.List<RFC822.MailboxAddress>? addrlist = email.get_recipients();
         if (addrlist == null || addrlist.size == 0)
             throw new SmtpError.REQUIRED_FIELD("No recipients in message");
-        
-        yield send_rcpts_async(addrlist, cancellable);
-        
+
+        yield send_rcpts_async(addrlist, email.request_dsn, cancellable);
+
         // DATA
-        Geary.RFC822.Message email_copy = new Geary.RFC822.Message.without_bcc(email);
-        response = yield cx.send_data_async(email_copy.get_network_buffer(true), true,
-            cancellable);
+        Geary.RFC822.Message email_copy =
+            new Geary.RFC822.Message.without_bcc(email);
+
+        response = yield cx.send_data_async(email_copy.get_network_buffer(true),
+                                            true, cancellable);
         if (!response.code.is_success_completed())
             response.throw_error("Unable to send message");
 
-        // if message was transmitted successfully, the state machine resets automatically
+        // If message was transmitted successfully, the state machine resets
+        // automatically.
         rset_required = false;
     }
-    
-    private async void send_rcpts_async(Gee.List<RFC822.MailboxAddress>? addrlist,
+
+    private async void send_rcpts_async(
+        Gee.List<RFC822.MailboxAddress>? addrlist, bool request_dsn,
         Cancellable? cancellable) throws Error {
         if (addrlist == null)
             return;
-        
+
         // TODO: Support mailbox groups
         foreach (RFC822.MailboxAddress mailbox in addrlist) {
-            RcptRequest rcpt_request = new RcptRequest.plain(mailbox.address);
-            Response response = yield cx.transaction_async(rcpt_request, cancellable);
+            RcptRequest rcpt_request = new RcptRequest.plain(mailbox.address,
+                                                             request_dsn);
+
+            Response response = yield cx.transaction_async(rcpt_request,
+                                                           cancellable);
 
             if (!response.code.is_success_completed()) {
                 if (response.code.is_denied()) {
-                    response.throw_error("recipient \"%s\" denied by smtp server".printf(rcpt_request.to_string()));
+                    response.throw_error(
+                        "recipient \"%s\" denied by smtp server".printf(
+                            rcpt_request.to_string()));
                 } else {
-                    response.throw_error("\"%s\" failed".printf(rcpt_request.to_string()));
+                    response.throw_error("\"%s\" failed".printf(
+                        rcpt_request.to_string()));
                 }
             }
         }
     }
-    
+
     public string to_string() {
         return cx.to_string();
     }

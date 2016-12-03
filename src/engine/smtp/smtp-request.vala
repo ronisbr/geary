@@ -66,12 +66,22 @@ public class Geary.Smtp.MailRequest : Geary.Smtp.Request {
 }
 
 public class Geary.Smtp.RcptRequest : Geary.Smtp.Request {
-    public RcptRequest(Geary.RFC822.MailboxAddress to) {
-        base (Command.RCPT, { "to:%s".printf(to.get_simple_address()) });
+    public RcptRequest(Geary.RFC822.MailboxAddress to, bool request_dsn) {
+        string rcpt_command = "to:%s".printf(to.get_simple_address());
+
+        if(request_dsn)
+            rcpt_command += " NOTIFY=SUCCESS,FAILURE,DELAY";
+
+        base (Command.RCPT, { rcpt_command });
     }
-    
-    public RcptRequest.plain(string addr) {
-        base (Command.RCPT, { "to:<%s>".printf(addr) });
+
+    public RcptRequest.plain(string addr, bool request_dsn) {
+        string rcpt_command = "to:<%s>".printf(addr);
+
+        if(request_dsn)
+            rcpt_command += " NOTIFY=SUCCESS,FAILURE,DELAY";
+
+        base (Command.RCPT, { rcpt_command });
     }
 }
 

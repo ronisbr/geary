@@ -69,6 +69,7 @@ public class ComposerWidget : Gtk.EventBox {
     private const string ACTION_INSERT_LINK = "insert-link";
     private const string ACTION_COMPOSE_AS_HTML = "compose-as-html";
     private const string ACTION_REQUEST_READ_RECEIPT = "request-read-receipt";
+    private const string ACTION_DELIVERY_STATUS_NOTIF = "delivery-status-notif";
     private const string ACTION_SHOW_EXTENDED = "show-extended";
     private const string ACTION_CLOSE = "close";
     private const string ACTION_CLOSE_AND_SAVE = "close-and-save";
@@ -109,17 +110,18 @@ public class ComposerWidget : Gtk.EventBox {
         {ACTION_INSERT_IMAGE,             on_insert_image                               },
         {ACTION_INSERT_LINK,              on_insert_link                                },
         // Composer commands
-        {ACTION_COMPOSE_AS_HTML,          on_toggle_action,        null,   "true",  on_compose_as_html_toggled      },
-        {ACTION_SHOW_EXTENDED,            on_toggle_action,        null,  "false",  on_show_extended_toggled        },
-        {ACTION_REQUEST_READ_RECEIPT,     on_toggle_action,        null,  "false",  on_request_read_receipt_toggled },
-        {ACTION_CLOSE,                    on_close                                                                  },
-        {ACTION_CLOSE_AND_SAVE,           on_close_and_save                                                         },
-        {ACTION_CLOSE_AND_DISCARD,        on_close_and_discard                                                      },
-        {ACTION_DETACH,                   on_detach                                                                 },
-        {ACTION_SEND,                     on_send                                                                   },
-        {ACTION_ADD_ATTACHMENT,           on_add_attachment                                                         },
-        {ACTION_ADD_ORIGINAL_ATTACHMENTS, on_pending_attachments                                                    },
-        {ACTION_SELECT_DICTIONARY,        on_select_dictionary                                                      },
+        {ACTION_COMPOSE_AS_HTML,          on_toggle_action,        null,   "true",  on_compose_as_html_toggled       },
+        {ACTION_SHOW_EXTENDED,            on_toggle_action,        null,  "false",  on_show_extended_toggled         },
+        {ACTION_REQUEST_READ_RECEIPT,     on_toggle_action,        null,  "false",  on_request_read_receipt_toggled  },
+        {ACTION_DELIVERY_STATUS_NOTIF,    on_toggle_action,        null, "false",   on_delivery_status_notif_toggled },
+        {ACTION_CLOSE,                    on_close                                                                   },
+        {ACTION_CLOSE_AND_SAVE,           on_close_and_save                                                          },
+        {ACTION_CLOSE_AND_DISCARD,        on_close_and_discard                                                       },
+        {ACTION_DETACH,                   on_detach                                                                  },
+        {ACTION_SEND,                     on_send                                                                    },
+        {ACTION_ADD_ATTACHMENT,           on_add_attachment                                                          },
+        {ACTION_ADD_ORIGINAL_ATTACHMENTS, on_pending_attachments                                                     },
+        {ACTION_SELECT_DICTIONARY,        on_select_dictionary                                                       },
     };
 
     public static Gee.MultiMap<string, string> action_accelerators = new Gee.HashMultiMap<string, string>();
@@ -1006,6 +1008,12 @@ public class ComposerWidget : Gtk.EventBox {
         if (actions.get_action_state(ACTION_REQUEST_READ_RECEIPT).get_boolean())
             email.disposition_notification_to = from;
 
+        // Request delivery status notification (DSN) as in RFC 3461.
+        if (actions.get_action_state(ACTION_DELIVERY_STATUS_NOTIF).get_boolean())
+            email.request_dsn = true;
+        else
+            email.request_dsn = false;
+
         return email;
     }
 
@@ -1888,6 +1896,11 @@ public class ComposerWidget : Gtk.EventBox {
     private void on_request_read_receipt_toggled(SimpleAction? action, Variant? new_state) {
         bool request_read_receipt = new_state.get_boolean();
         action.set_state(request_read_receipt);
+    }
+
+    private void on_delivery_status_notif_toggled(SimpleAction? action, Variant? new_state) {
+        bool delivery_status_notif = new_state.get_boolean();
+        action.set_state(delivery_status_notif);
     }
 
     private void on_font_family(SimpleAction action, Variant? param) {

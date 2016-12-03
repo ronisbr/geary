@@ -41,6 +41,10 @@ public class Geary.RFC822.Message : BaseObject {
     public string? mailer { get; private set; default = null; }
     public Geary.RFC822.Date? date { get; private set; default = null; }
 
+    // Store if the user wants to request delivery status notification (DSN) for
+    // this message as in RFC 3461.
+    public bool request_dsn { get; set; default = false;}
+
     private GMime.Message message;
 
     // Since GMime.Message does a bad job of separating the headers and body (GMime.Message.get_body()
@@ -165,6 +169,9 @@ public class Geary.RFC822.Message : BaseObject {
             this.mailer = email.mailer;
             this.message.set_header(HEADER_MAILER, email.mailer);
         }
+
+        // Request delivery status notification (DSN).
+        this.request_dsn = email.request_dsn;
 
         // Build the message's body mime parts
 
@@ -616,6 +623,9 @@ public class Geary.RFC822.Message : BaseObject {
                 new RFC822.MailboxAddresses.from_rfc822_string(
                     disposition_notification_to);
         }
+
+        // Request delivery status notification (DSN).
+        this.request_dsn = false;
     }
     
     private Gee.List<RFC822.MailboxAddress>? convert_gmime_address_list(InternetAddressList? addrlist,

@@ -148,7 +148,7 @@ public class Geary.Email : BaseObject {
     public Geary.EmailFlags? email_flags { get; private set; default = null; }
     
     public Geary.Email.Field fields { get; private set; default = Field.NONE; }
-    
+   
     private Geary.RFC822.Message? message = null;
     
     public Email(Geary.EmailIdentifier id) {

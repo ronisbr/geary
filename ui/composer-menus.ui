@@ -60,6 +60,12 @@
         <attribute name="action">cmp.request-read-receipt</attribute>
       </item>
     </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Delivery Status Notification</attribute>
+        <attribute name="action">cmp.delivery-status-notif</attribute>
+      </item>
+    </section>
   </menu>
 
   <menu id="plain_menu_model">
@@ -79,6 +85,12 @@
       <item>
         <attribute name="label" translatable="yes">Request Read Receipt</attribute>
         <attribute name="action">cmp.request-read-receipt</attribute>
+      </item>
+    </section>
+    <section>
+      <item>
+        <attribute name="label" translatable="yes">Delivery Status Notification</attribute>
+        <attribute name="action">cmp.delivery-status-notif</attribute>
       </item>
     </section>
   </menu>
